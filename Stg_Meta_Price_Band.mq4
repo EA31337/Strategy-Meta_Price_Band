@@ -6,8 +6,8 @@
 
 /**
  * @file
- * Implements SAR meta strategy.
+ * Implements Price Band meta strategy.
  */
 
 // Includes the main code.
-#include "Stg_Meta_SAR.mq5"
+#include "Stg_Meta_Price_Band.mq5"
