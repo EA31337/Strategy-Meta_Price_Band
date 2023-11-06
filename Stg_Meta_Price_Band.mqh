@@ -1,73 +1,77 @@
 /**
  * @file
- * Implements SAR meta strategy.
+ * Implements Price Band meta strategy.
  */
 
 // Prevents processing this includes file multiple times.
-#ifndef STG_META_SAR_MQH
-#define STG_META_SAR_MQH
+#ifndef STG_META_PRICE_BAND_MQH
+#define STG_META_PRICE_BAND_MQH
 
 // User input params.
-INPUT2_GROUP("Meta SAR strategy: main params");
-INPUT2 ENUM_STRATEGY Meta_SAR_Strategy_SAR_1st = STRAT_MA_TREND;    // Strategy on 1st SAR value after change
-INPUT2 ENUM_STRATEGY Meta_SAR_Strategy_SAR_2nd = STRAT_CHAIKIN;     // Strategy on 2nd SAR value after change
-INPUT2 ENUM_STRATEGY Meta_SAR_Strategy_SAR_3rd = STRAT_OSCILLATOR;  // Strategy on 3rd+ SAR value after change
-INPUT3_GROUP("Meta SAR strategy: common params");
-INPUT3 float Meta_SAR_LotSize = 0;                // Lot size
-INPUT3 int Meta_SAR_SignalOpenMethod = 0;         // Signal open method
-INPUT3 float Meta_SAR_SignalOpenLevel = 0;        // Signal open level
-INPUT3 int Meta_SAR_SignalOpenFilterMethod = 32;  // Signal open filter method
-INPUT3 int Meta_SAR_SignalOpenFilterTime = 3;     // Signal open filter time (0-31)
-INPUT3 int Meta_SAR_SignalOpenBoostMethod = 0;    // Signal open boost method
-INPUT3 int Meta_SAR_SignalCloseMethod = 0;        // Signal close method
-INPUT3 int Meta_SAR_SignalCloseFilter = 32;       // Signal close filter (-127-127)
-INPUT3 float Meta_SAR_SignalCloseLevel = 0;       // Signal close level
-INPUT3 int Meta_SAR_PriceStopMethod = 0;          // Price limit method
-INPUT3 float Meta_SAR_PriceStopLevel = 2;         // Price limit level
-INPUT3 int Meta_SAR_TickFilterMethod = 32;        // Tick filter method (0-255)
-INPUT3 float Meta_SAR_MaxSpread = 4.0;            // Max spread to trade (in pips)
-INPUT3 short Meta_SAR_Shift = 0;                  // Shift
-INPUT3 float Meta_SAR_OrderCloseLoss = 200;       // Order close loss
-INPUT3 float Meta_SAR_OrderCloseProfit = 200;     // Order close profit
-INPUT3 int Meta_SAR_OrderCloseTime = 2880;        // Order close time in mins (>0) or bars (<0)
-INPUT_GROUP("Meta SAR strategy: SAR indicator params");
-INPUT float Meta_SAR_Indi_SAR_Step = 0.011f;                           // Step
-INPUT float Meta_SAR_Indi_SAR_Maximum_Stop = 0.1f;                     // Maximum stop
-INPUT int Meta_SAR_Indi_SAR_Shift = 0;                                 // Shift
-INPUT ENUM_IDATA_SOURCE_TYPE Meta_SAR_SAR_SourceType = IDATA_BUILTIN;  // Source type
+INPUT2_GROUP("Meta Price Band strategy: main params");
+INPUT2 ENUM_STRATEGY Meta_Price_Band_Strategy_Price_Band_1st =
+    STRAT_MA_TREND;                                                            // Strategy on 1st SAR value after change
+INPUT2 ENUM_STRATEGY Meta_Price_Band_Strategy_Price_Band_2nd = STRAT_CHAIKIN;  // Strategy on 2nd SAR value after change
+INPUT2 ENUM_STRATEGY Meta_Price_Band_Strategy_Price_Band_3rd =
+    STRAT_OSCILLATOR;  // Strategy on 3rd+ SAR value after change
+INPUT3_GROUP("Meta Price Band strategy: common params");
+INPUT3 float Meta_Price_Band_LotSize = 0;                // Lot size
+INPUT3 int Meta_Price_Band_SignalOpenMethod = 0;         // Signal open method
+INPUT3 float Meta_Price_Band_SignalOpenLevel = 0;        // Signal open level
+INPUT3 int Meta_Price_Band_SignalOpenFilterMethod = 32;  // Signal open filter method
+INPUT3 int Meta_Price_Band_SignalOpenFilterTime = 3;     // Signal open filter time (0-31)
+INPUT3 int Meta_Price_Band_SignalOpenBoostMethod = 0;    // Signal open boost method
+INPUT3 int Meta_Price_Band_SignalCloseMethod = 0;        // Signal close method
+INPUT3 int Meta_Price_Band_SignalCloseFilter = 32;       // Signal close filter (-127-127)
+INPUT3 float Meta_Price_Band_SignalCloseLevel = 0;       // Signal close level
+INPUT3 int Meta_Price_Band_PriceStopMethod = 0;          // Price limit method
+INPUT3 float Meta_Price_Band_PriceStopLevel = 2;         // Price limit level
+INPUT3 int Meta_Price_Band_TickFilterMethod = 32;        // Tick filter method (0-255)
+INPUT3 float Meta_Price_Band_MaxSpread = 4.0;            // Max spread to trade (in pips)
+INPUT3 short Meta_Price_Band_Shift = 0;                  // Shift
+INPUT3 float Meta_Price_Band_OrderCloseLoss = 200;       // Order close loss
+INPUT3 float Meta_Price_Band_OrderCloseProfit = 200;     // Order close profit
+INPUT3 int Meta_Price_Band_OrderCloseTime = 2880;        // Order close time in mins (>0) or bars (<0)
+INPUT_GROUP("Meta Price Band strategy: SAR indicator params");
+INPUT float Meta_Price_Band_Indi_Price_Band_Step = 0.011f;                           // Step
+INPUT float Meta_Price_Band_Indi_Price_Band_Maximum_Stop = 0.1f;                     // Maximum stop
+INPUT int Meta_Price_Band_Indi_Price_Band_Shift = 0;                                 // Shift
+INPUT ENUM_IDATA_SOURCE_TYPE Meta_Price_Band_Price_Band_SourceType = IDATA_BUILTIN;  // Source type
 
 // Structs.
 // Defines struct with default user strategy values.
-struct Stg_Meta_SAR_Params_Defaults : StgParams {
-  Stg_Meta_SAR_Params_Defaults()
-      : StgParams(::Meta_SAR_SignalOpenMethod, ::Meta_SAR_SignalOpenFilterMethod, ::Meta_SAR_SignalOpenLevel,
-                  ::Meta_SAR_SignalOpenBoostMethod, ::Meta_SAR_SignalCloseMethod, ::Meta_SAR_SignalCloseFilter,
-                  ::Meta_SAR_SignalCloseLevel, ::Meta_SAR_PriceStopMethod, ::Meta_SAR_PriceStopLevel,
-                  ::Meta_SAR_TickFilterMethod, ::Meta_SAR_MaxSpread, ::Meta_SAR_Shift) {
-    Set(STRAT_PARAM_LS, ::Meta_SAR_LotSize);
-    Set(STRAT_PARAM_OCL, ::Meta_SAR_OrderCloseLoss);
-    Set(STRAT_PARAM_OCP, ::Meta_SAR_OrderCloseProfit);
-    Set(STRAT_PARAM_OCT, ::Meta_SAR_OrderCloseTime);
-    Set(STRAT_PARAM_SOFT, ::Meta_SAR_SignalOpenFilterTime);
+struct Stg_Meta_Price_Band_Params_Defaults : StgParams {
+  Stg_Meta_Price_Band_Params_Defaults()
+      : StgParams(::Meta_Price_Band_SignalOpenMethod, ::Meta_Price_Band_SignalOpenFilterMethod,
+                  ::Meta_Price_Band_SignalOpenLevel, ::Meta_Price_Band_SignalOpenBoostMethod,
+                  ::Meta_Price_Band_SignalCloseMethod, ::Meta_Price_Band_SignalCloseFilter,
+                  ::Meta_Price_Band_SignalCloseLevel, ::Meta_Price_Band_PriceStopMethod,
+                  ::Meta_Price_Band_PriceStopLevel, ::Meta_Price_Band_TickFilterMethod, ::Meta_Price_Band_MaxSpread,
+                  ::Meta_Price_Band_Shift) {
+    Set(STRAT_PARAM_LS, ::Meta_Price_Band_LotSize);
+    Set(STRAT_PARAM_OCL, ::Meta_Price_Band_OrderCloseLoss);
+    Set(STRAT_PARAM_OCP, ::Meta_Price_Band_OrderCloseProfit);
+    Set(STRAT_PARAM_OCT, ::Meta_Price_Band_OrderCloseTime);
+    Set(STRAT_PARAM_SOFT, ::Meta_Price_Band_SignalOpenFilterTime);
   }
 };
 
-class Stg_Meta_SAR : public Strategy {
+class Stg_Meta_Price_Band : public Strategy {
  protected:
   DictStruct<long, Ref<Strategy>> strats;
 
  public:
-  Stg_Meta_SAR(StgParams &_sparams, TradeParams &_tparams, ChartParams &_cparams, string _name = "")
+  Stg_Meta_Price_Band(StgParams &_sparams, TradeParams &_tparams, ChartParams &_cparams, string _name = "")
       : Strategy(_sparams, _tparams, _cparams, _name) {}
 
-  static Stg_Meta_SAR *Init(ENUM_TIMEFRAMES _tf = NULL, EA *_ea = NULL) {
+  static Stg_Meta_Price_Band *Init(ENUM_TIMEFRAMES _tf = NULL, EA *_ea = NULL) {
     // Initialize strategy initial values.
-    Stg_Meta_SAR_Params_Defaults stg_meta_sar_defaults;
-    StgParams _stg_params(stg_meta_sar_defaults);
+    Stg_Meta_Price_Band_Params_Defaults stg_meta_price_band_defaults;
+    StgParams _stg_params(stg_meta_price_band_defaults);
     // Initialize Strategy instance.
     ChartParams _cparams(_tf, _Symbol);
     TradeParams _tparams;
-    Strategy *_strat = new Stg_Meta_SAR(_stg_params, _tparams, _cparams, "(Meta) SAR");
+    Strategy *_strat = new Stg_Meta_Price_Band(_stg_params, _tparams, _cparams, "(Meta) Price Band");
     return _strat;
   }
 
@@ -75,13 +79,14 @@ class Stg_Meta_SAR : public Strategy {
    * Event on strategy's init.
    */
   void OnInit() {
-    StrategyAdd(Meta_SAR_Strategy_SAR_1st, 0);
-    StrategyAdd(Meta_SAR_Strategy_SAR_2nd, 1);
-    StrategyAdd(Meta_SAR_Strategy_SAR_3rd, 2);
+    StrategyAdd(Meta_Price_Band_Strategy_Price_Band_1st, 0);
+    StrategyAdd(Meta_Price_Band_Strategy_Price_Band_2nd, 1);
+    StrategyAdd(Meta_Price_Band_Strategy_Price_Band_3rd, 2);
     // Initialize indicators.
     {
-      IndiSARParams _indi_params(::Meta_SAR_Indi_SAR_Step, ::Meta_SAR_Indi_SAR_Maximum_Stop, ::Meta_SAR_Indi_SAR_Shift);
-      _indi_params.SetDataSourceType(::Meta_SAR_SAR_SourceType);
+      IndiSARParams _indi_params(::Meta_Price_Band_Indi_Price_Band_Step, ::Meta_Price_Band_Indi_Price_Band_Maximum_Stop,
+                                 ::Meta_Price_Band_Indi_Price_Band_Shift);
+      _indi_params.SetDataSourceType(::Meta_Price_Band_Price_Band_SourceType);
       _indi_params.SetTf(PERIOD_D1);
       SetIndicator(new Indi_SAR(_indi_params));
     }
@@ -168,4 +173,4 @@ class Stg_Meta_SAR : public Strategy {
   }
 };
 
-#endif  // STG_META_SAR_MQH
+#endif  // STG_META_PRICE_BAND_MQH

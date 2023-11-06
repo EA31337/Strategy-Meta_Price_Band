@@ -1,6 +1,6 @@
 /**
  * @file
- * Implements SAR meta strategy.
+ * Implements Price Band meta strategy.
  */
 
 // Includes conditional compilation directives.
@@ -38,10 +38,10 @@ input bool Info_On_Chart = true;          // Display info on chart.
 #include "Stg_Meta_Price_Band.mqh"
 
 // Defines.
-#define ea_name "Strategy Meta SAR"
+#define ea_name "Strategy Meta Price Band"
 #define ea_version "2.000"
-#define ea_desc "Trades with different strategies based on the daily SAR value changes."
-#define ea_link "https://github.com/EA31337/Strategy-Meta_SAR"
+#define ea_desc "Trades with different strategies inside and outside price bands."
+#define ea_link "https://github.com/EA31337/Strategy-Meta_Price_Band"
 #define ea_author "EA31337 Ltd"
 
 // Properties.
@@ -67,7 +67,7 @@ int OnInit() {
   bool _result = true;
   EAParams ea_params(__FILE__, Log_Level);
   ea = new EA(ea_params);
-  _result &= ea.StrategyAdd<Stg_Meta_SAR>(Active_Tfs);
+  _result &= ea.StrategyAdd<Stg_Meta_Price_Band>(Active_Tfs);
   return (_result ? INIT_SUCCEEDED : INIT_FAILED);
 }
 

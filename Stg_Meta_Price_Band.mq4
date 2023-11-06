@@ -6,7 +6,7 @@
 
 /**
  * @file
- * Implements SAR meta strategy.
+ * Implements Price Band meta strategy.
  */
 
 // Includes the main code.
