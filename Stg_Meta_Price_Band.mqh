@@ -7,13 +7,20 @@
 #ifndef STG_META_PRICE_BAND_MQH
 #define STG_META_PRICE_BAND_MQH
 
+// Defines enumeration for price band indicator types.
+enum ENUM_STG_META_BAND_TYPE {
+  STG_META_BAND_TYPE_0_NONE = 0,  // (None)
+  STG_META_BAND_TYPE_BBANDS,      // Bollinger Bands
+  STG_META_BAND_TYPE_ENVELOPES,   // Envelopes
+};
+
 // User input params.
 INPUT2_GROUP("Meta Price Band strategy: main params");
-INPUT2 ENUM_STRATEGY Meta_Price_Band_Strategy_Price_Band_1st =
-    STRAT_MA_TREND;                                                            // Strategy on 1st SAR value after change
-INPUT2 ENUM_STRATEGY Meta_Price_Band_Strategy_Price_Band_2nd = STRAT_CHAIKIN;  // Strategy on 2nd SAR value after change
-INPUT2 ENUM_STRATEGY Meta_Price_Band_Strategy_Price_Band_3rd =
-    STRAT_OSCILLATOR;  // Strategy on 3rd+ SAR value after change
+INPUT2 ENUM_STRATEGY Meta_Price_Band_Strategy_Price_Band_Inner = STRAT_DEMARKER;     // Strategy for price inside band
+INPUT2 ENUM_STRATEGY Meta_Price_Band_Strategy_Price_Band_Outer = STRAT_BULLS_POWER;  // Strategy for price outside band
+INPUT2 ENUM_STG_META_BAND_TYPE Meta_Price_Band_Type = STG_META_BAND_TYPE_BBANDS;     // Price Band indicator type
+INPUT2 ENUM_APPLIED_PRICE Meta_Price_Band_Applied_Price = PRICE_OPEN;  // Applied Price for Price Band indicator
+INPUT2 ENUM_TIMEFRAMES Meta_Price_Band_Tf = PERIOD_D1;                 // Timeframe for Price Band indicator
 INPUT3_GROUP("Meta Price Band strategy: common params");
 INPUT3 float Meta_Price_Band_LotSize = 0;                // Lot size
 INPUT3 int Meta_Price_Band_SignalOpenMethod = 0;         // Signal open method
@@ -32,15 +39,30 @@ INPUT3 short Meta_Price_Band_Shift = 0;                  // Shift
 INPUT3 float Meta_Price_Band_OrderCloseLoss = 200;       // Order close loss
 INPUT3 float Meta_Price_Band_OrderCloseProfit = 200;     // Order close profit
 INPUT3 int Meta_Price_Band_OrderCloseTime = 2880;        // Order close time in mins (>0) or bars (<0)
-INPUT_GROUP("Meta Price Band strategy: SAR indicator params");
-INPUT float Meta_Price_Band_Indi_Price_Band_Step = 0.011f;                           // Step
-INPUT float Meta_Price_Band_Indi_Price_Band_Maximum_Stop = 0.1f;                     // Maximum stop
-INPUT int Meta_Price_Band_Indi_Price_Band_Shift = 0;                                 // Shift
-INPUT ENUM_IDATA_SOURCE_TYPE Meta_Price_Band_Price_Band_SourceType = IDATA_BUILTIN;  // Source type
+INPUT_GROUP("Bands strategy: Bollinger Bands indicator params");
+INPUT3 int Meta_Price_Band_Indi_Bands_Period = 24;                                // Period
+INPUT3 float Meta_Price_Band_Indi_Bands_Deviation = 1.0f;                         // Deviation
+INPUT3 int Meta_Price_Band_Indi_Bands_HShift = 0;                                 // Horizontal shift
+INPUT3 ENUM_APPLIED_PRICE Meta_Price_Band_Indi_Bands_Applied_Price = PRICE_OPEN;  // Applied Price
+INPUT3 int Meta_Price_Band_Indi_Bands_Shift = 0;                                  // Shift
+INPUT3 ENUM_BANDS_LINE Meta_Price_Band_Indi_Bands_Mode_Base = BAND_BASE;          // Mode for base band
+INPUT3 ENUM_BANDS_LINE Meta_Price_Band_Indi_Bands_Mode_Lower = BAND_LOWER;        // Mode for lower band
+INPUT3 ENUM_BANDS_LINE Meta_Price_Band_Indi_Bands_Mode_Upper = BAND_UPPER;        // Mode for upper band
+INPUT3_GROUP("Bands strategy: Envelopes indicator params");
+INPUT3 int Meta_Price_Band_Indi_Envelopes_MA_Period = 20;                             // Period
+INPUT3 int Meta_Price_Band_Indi_Envelopes_MA_Shift = 0;                               // MA Shift
+INPUT3 ENUM_MA_METHOD Meta_Price_Band_Indi_Envelopes_MA_Method = (ENUM_MA_METHOD)1;   // MA Method
+INPUT3 ENUM_APPLIED_PRICE Meta_Price_Band_Indi_Envelopes_Applied_Price = PRICE_OPEN;  // Applied Price
+INPUT3 float Meta_Price_Band_Indi_Envelopes_Deviation = 0.1f;                         // Deviation
+INPUT3 int Meta_Price_Band_Indi_Envelopes_Shift = 0;                                  // Shift
+INPUT3 ENUM_SIGNAL_LINE Meta_Price_Band_Indi_Envelopes_Mode_Base = LINE_MAIN;         // Mode for base band
+INPUT3 ENUM_LO_UP_LINE Meta_Price_Band_Indi_Envelopes_Mode_Lower = LINE_LOWER;        // Mode for lower band
+INPUT3 ENUM_LO_UP_LINE Meta_Price_Band_Indi_Envelopes_Mode_Upper = LINE_UPPER;        // Mode for upper band
 
 // Structs.
 // Defines struct with default user strategy values.
 struct Stg_Meta_Price_Band_Params_Defaults : StgParams {
+  int mode_base, mode_lower, mode_upper;
   Stg_Meta_Price_Band_Params_Defaults()
       : StgParams(::Meta_Price_Band_SignalOpenMethod, ::Meta_Price_Band_SignalOpenFilterMethod,
                   ::Meta_Price_Band_SignalOpenLevel, ::Meta_Price_Band_SignalOpenBoostMethod,
@@ -54,11 +76,20 @@ struct Stg_Meta_Price_Band_Params_Defaults : StgParams {
     Set(STRAT_PARAM_OCT, ::Meta_Price_Band_OrderCloseTime);
     Set(STRAT_PARAM_SOFT, ::Meta_Price_Band_SignalOpenFilterTime);
   }
+  // Getters.
+  int GetModeBase() { return mode_base; }
+  int GetModeLower() { return mode_lower; }
+  int GetModeUpper() { return mode_upper; }
+  // Setters.
+  void SetModeBase(int _value) { mode_base = _value; }
+  void SetModeLower(int _value) { mode_lower = _value; }
+  void SetModeUpper(int _value) { mode_upper = _value; }
 };
 
 class Stg_Meta_Price_Band : public Strategy {
  protected:
   DictStruct<long, Ref<Strategy>> strats;
+  Stg_Meta_Price_Band_Params_Defaults ssparams;
 
  public:
   Stg_Meta_Price_Band(StgParams &_sparams, TradeParams &_tparams, ChartParams &_cparams, string _name = "")
@@ -79,16 +110,38 @@ class Stg_Meta_Price_Band : public Strategy {
    * Event on strategy's init.
    */
   void OnInit() {
-    StrategyAdd(Meta_Price_Band_Strategy_Price_Band_1st, 0);
-    StrategyAdd(Meta_Price_Band_Strategy_Price_Band_2nd, 1);
-    StrategyAdd(Meta_Price_Band_Strategy_Price_Band_3rd, 2);
+    StrategyAdd(::Meta_Price_Band_Strategy_Price_Band_Inner, 0);
+    StrategyAdd(::Meta_Price_Band_Strategy_Price_Band_Outer, 1);
     // Initialize indicators.
-    {
-      IndiSARParams _indi_params(::Meta_Price_Band_Indi_Price_Band_Step, ::Meta_Price_Band_Indi_Price_Band_Maximum_Stop,
-                                 ::Meta_Price_Band_Indi_Price_Band_Shift);
-      _indi_params.SetDataSourceType(::Meta_Price_Band_Price_Band_SourceType);
-      _indi_params.SetTf(PERIOD_D1);
-      SetIndicator(new Indi_SAR(_indi_params));
+    switch (::Meta_Price_Band_Type) {
+      case STG_META_BAND_TYPE_BBANDS:  // Bollinger Bands
+      {
+        IndiBandsParams _indi_params(::Meta_Price_Band_Indi_Bands_Period, ::Meta_Price_Band_Indi_Bands_Deviation,
+                                     ::Meta_Price_Band_Indi_Bands_HShift, ::Meta_Price_Band_Indi_Bands_Applied_Price,
+                                     ::Meta_Price_Band_Indi_Bands_Shift);
+        _indi_params.SetTf(::Meta_Price_Band_Tf);
+        SetIndicator(new Indi_Bands(_indi_params), ::Meta_Price_Band_Type);
+        ssparams.SetModeBase(::Meta_Price_Band_Indi_Bands_Mode_Base);
+        ssparams.SetModeLower(::Meta_Price_Band_Indi_Bands_Mode_Lower);
+        ssparams.SetModeUpper(::Meta_Price_Band_Indi_Bands_Mode_Upper);
+        break;
+      }
+      case STG_META_BAND_TYPE_ENVELOPES:  // Envelopes
+      {
+        IndiEnvelopesParams _indi_params(
+            ::Meta_Price_Band_Indi_Envelopes_MA_Period, ::Meta_Price_Band_Indi_Envelopes_MA_Shift,
+            ::Meta_Price_Band_Indi_Envelopes_MA_Method, ::Meta_Price_Band_Indi_Envelopes_Applied_Price,
+            ::Meta_Price_Band_Indi_Envelopes_Deviation, ::Meta_Price_Band_Indi_Envelopes_Shift);
+        _indi_params.SetTf(::Meta_Price_Band_Tf);
+        SetIndicator(new Indi_Envelopes(_indi_params), ::Meta_Price_Band_Type);
+        ssparams.SetModeBase(::Meta_Price_Band_Indi_Envelopes_Mode_Base);
+        ssparams.SetModeLower(::Meta_Price_Band_Indi_Envelopes_Mode_Lower);
+        ssparams.SetModeUpper(::Meta_Price_Band_Indi_Envelopes_Mode_Upper);
+        break;
+      }
+      case STG_META_BAND_TYPE_0_NONE:  // (None)
+      default:
+        break;
     }
   }
 
@@ -123,23 +176,19 @@ class Stg_Meta_Price_Band : public Strategy {
   Ref<Strategy> GetStrategy() {
     uint _ishift = 0;
     Chart *_chart = trade.GetChart();
-    IndicatorBase *_indi = GetIndicator();
-    Ref<Strategy> _strat_ref;
-    double _price_open = _chart.GetOpen();
-    bool _sar_gt_p = _indi[_ishift][0] > _price_open;
-    bool _sar_lt_p = _indi[_ishift][0] < _price_open;
-    bool _sar_dn1 = _sar_gt_p && _indi[_ishift + 1][0] < _indi[_ishift][0];
-    bool _sar_up1 = _sar_lt_p && _indi[_ishift + 1][0] > _indi[_ishift][0];
-    bool _sar_dn2 = _sar_gt_p && _indi[_ishift + 2][0] < _indi[_ishift][0];
-    bool _sar_up2 = _sar_lt_p && _indi[_ishift + 2][0] > _indi[_ishift][0];
-    bool _sar_dn3 = _sar_gt_p && _indi[_ishift + 3][0] < _indi[_ishift][0];
-    bool _sar_up3 = _sar_lt_p && _indi[_ishift + 3][0] > _indi[_ishift][0];
-    if (_sar_dn1 || _sar_up1) {
-      _strat_ref = strats.GetByKey(0);
-    } else if (_sar_dn2 || _sar_up2) {
+    IndicatorBase *_indi = GetIndicator(::Meta_Price_Band_Type);
+    double _price_ap = _chart.GetPrice(::Meta_Price_Band_Applied_Price, _ishift);
+    int _mode_base = ssparams.GetModeBase();
+    int _mode_lower = ssparams.GetModeLower();
+    int _mode_upper = ssparams.GetModeUpper();
+    Ref<Strategy> _strat_ref = strats.GetByKey(0);
+    // bool _is_valid = _indi.GetFlag(INDI_ENTRY_FLAG_IS_VALID, 0) && _indi.GetFlag(INDI_ENTRY_FLAG_IS_VALID, 1);
+    bool _is_valid = _indi.IsValid();
+    if (!_is_valid) {
+      return _strat_ref;
+    }
+    if (_price_ap <= _indi[_ishift][(int)_mode_lower] || _price_ap >= _indi[_ishift][(int)_mode_upper]) {
       _strat_ref = strats.GetByKey(1);
-    } else if (_sar_dn3 || _sar_up3) {
-      _strat_ref = strats.GetByKey(2);
     }
     return _strat_ref;
   }
