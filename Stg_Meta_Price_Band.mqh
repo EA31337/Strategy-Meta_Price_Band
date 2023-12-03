@@ -16,8 +16,8 @@ enum ENUM_STG_META_BAND_TYPE {
 
 // User input params.
 INPUT2_GROUP("Meta Price Band strategy: main params");
-INPUT2 ENUM_STRATEGY Meta_Price_Band_Strategy_Price_Band_Inner = STRAT_DEMARKER;     // Strategy for price inside band
-INPUT2 ENUM_STRATEGY Meta_Price_Band_Strategy_Price_Band_Outer = STRAT_BULLS_POWER;  // Strategy for price outside band
+INPUT2 ENUM_STRATEGY Meta_Price_Band_Strategy_Price_Band_Inner = STRAT_CCI;          // Strategy for price inside band
+INPUT2 ENUM_STRATEGY Meta_Price_Band_Strategy_Price_Band_Outer = STRAT_MA_BREAKOUT;  // Strategy for price outside band
 INPUT2 ENUM_STG_META_BAND_TYPE Meta_Price_Band_Type = STG_META_BAND_TYPE_BBANDS;     // Price Band indicator type
 INPUT2 ENUM_APPLIED_PRICE Meta_Price_Band_Applied_Price = PRICE_OPEN;  // Applied Price for Price Band indicator
 INPUT2 ENUM_TIMEFRAMES Meta_Price_Band_Tf = PERIOD_D1;                 // Timeframe for Price Band indicator
